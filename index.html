@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>魚煙居酒屋｜同學會點餐</title>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif; background: #f5f0eb; color: #222; min-height: 100vh; }
+
+.header { background: #1a1a2e; color: #fff; padding: 16px; text-align: center; position: sticky; top: 0; z-index: 100; }
+.header h1 { font-size: 18px; letter-spacing: 2px; }
+.header p { font-size: 12px; color: #aaa; margin-top: 4px; }
+
+.name-section { padding: 16px; background: #fff; border-bottom: 1px solid #e0d8cf; }
+.name-section label { font-size: 13px; color: #666; display: block; margin-bottom: 6px; }
+.name-input { width: 100%; padding: 10px 14px; font-size: 15px; border: 2px solid #d4b896; border-radius: 8px; outline: none; }
+.name-input:focus { border-color: #8b6c42; }
+
+.tabs { display: flex; overflow-x: auto; background: #fff; border-bottom: 2px solid #e0d8cf; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { flex-shrink: 0; padding: 10px 16px; font-size: 13px; font-weight: 600; color: #888; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
+.tab.active { color: #8b4513; border-bottom-color: #8b4513; }
+
+.section { display: none; padding: 12px; }
+.section.active { display: block; }
+
+.category-label { font-size: 11px; font-weight: 700; color: #8b4513; letter-spacing: 2px; text-transform: uppercase; margin: 12px 0 6px; padding-left: 4px; }
+
+.item { background: #fff; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.item-info { flex: 1; min-width: 0; }
+.item-name { font-size: 14px; font-weight: 600; }
+.item-name .star { color: #e67e22; font-size: 12px; }
+.item-name .hot { color: #e74c3c; font-size: 12px; }
+.item-sub { font-size: 11px; color: #999; margin-top: 2px; }
+.item-price { font-size: 13px; color: #8b4513; font-weight: 700; white-space: nowrap; }
+.qty-control { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.qty-btn { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #d4b896; background: #fff; font-size: 16px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #8b4513; font-weight: 700; }
+.qty-btn:active { background: #f0e8dc; }
+.qty-num { min-width: 22px; text-align: center; font-size: 15px; font-weight: 700; }
+
+.sticky-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1a1a2e; padding: 12px 16px; display: flex; align-items: center; gap: 12px; z-index: 200; box-shadow: 0 -4px 12px rgba(0,0,0,.2); }
+.total-info { flex: 1; }
+.total-label { font-size: 11px; color: #aaa; }
+.total-amount { font-size: 18px; font-weight: 800; color: #f0c060; }
+.total-items { font-size: 11px; color: #aaa; }
+.copy-btn { background: #8b4513; color: #fff; border: none; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.copy-btn:active { background: #6b3410; }
+.copy-btn.copied { background: #27ae60; }
+
+.toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: #27ae60; color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 14px; font-weight: 600; z-index: 999; opacity: 0; transition: opacity .3s; pointer-events: none; }
+.toast.show { opacity: 1; }
+
+.bottom-space { height: 80px; }
+
+.note { font-size: 11px; color: #bbb; font-style: italic; }
+</style>
+</head>
+<body>
+
+<div id="safari-overlay" style="display:none;position:fixed;inset:0;background:#1a1a2e;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;">
+  <div style="font-size:56px;margin-bottom:20px;">🐟</div>
+  <div style="color:#f0c060;font-size:20px;font-weight:800;margin-bottom:12px;">請用 Safari 開啟</div>
+  <div style="color:#ccc;font-size:15px;line-height:1.8;margin-bottom:28px;">此工具需要 Safari 才能正常運作<br>Chrome 不支援開啟本機 HTML 檔案</div>
+  <div style="background:#fff;border-radius:14px;padding:20px 24px;text-align:left;width:100%;max-width:320px;">
+    <div style="font-size:13px;color:#333;font-weight:700;margin-bottom:12px;">📋 操作步驟</div>
+    <div style="font-size:13px;color:#555;line-height:2;">
+      1. 回到「<strong>檔案</strong>」App<br>
+      2. 找到 <strong>魚煙點餐表.html</strong><br>
+      3. 長按檔案<br>
+      4. 點「<strong>分享</strong>」<br>
+      5. 選「<strong>在 Safari 中開啟</strong>」
+    </div>
+  </div>
+</div>
+
+<div class="header">
+  <h1>🐟 魚煙居酒屋</h1>
+  <p>2026/9/5（六）晚餐｜國醫同學會點餐表</p>
+</div>
+
+<script>
+// 偵測是否為 Safari；若不是，顯示引導畫面
+(function(){
+  var ua = navigator.userAgent;
+  var isIOS = /iPad|iPhone|iPod/.test(ua);
+  var isSafari = isIOS && /Safari/.test(ua) && !/CriOS|FxiOS|OPiOS|mercury/.test(ua);
+  var overlay = document.getElementById('safari-overlay');
+  if (isIOS && !isSafari) {
+    overlay.style.display = 'flex';
+  } else {
+    overlay.style.display = 'none';
+  }
+})();
+</script>
+
+<div class="name-section">
+  <label>你的姓名（填完再選菜）</label>
+  <input class="name-input" id="nameInput" type="text" placeholder="例：志雄、如如、語恬…">
+</div>
+
+<div class="tabs" id="tabs"></div>
+<div id="sections"></div>
+<div class="bottom-space"></div>
+
+<div class="sticky-bar">
+  <div class="total-info">
+    <div class="total-label">目前小計</div>
+    <div class="total-amount" id="totalAmt">$0</div>
+    <div class="total-items" id="totalItems">尚未選擇任何餐點</div>
+  </div>
+  <button class="copy-btn" id="copyBtn" onclick="copyOrder()">📋 一鍵生成點餐結果給志雄</button>
+</div>
+
+<div class="toast" id="toast">✅ 已複製！請貼到 LINE 群組</div>
+
+<script>
+const MENU = [
+  {
+    tab: "刺身",
+    items: [
+      { name: "綜合刺身小盛", sub: "7切", price: 300 },
+      { name: "特上旬採大盛", sub: "12切", price: 480 },
+      { name: "極上旬採繁盛", sub: "17切", price: 660 },
+      { name: "激賞海港超特盛", sub: "30切", price: 1380 },
+      { name: "★厚切紅甘", sub: "7切/12切", price: "280/420" },
+      { name: "★厚切鮭魚", sub: "7切/12切", price: "290/450" },
+      { name: "★厚切青甘", sub: "7切/12切", price: "320/500" },
+      { name: "厚切鮪魚", sub: "7切/12切", price: "350/520" },
+      { name: "厚切鮭魚大腹", sub: "7切/12切", price: "350/540" },
+      { name: "天使紅蝦", sub: "2尾", price: 160 },
+      { name: "北海道干貝", sub: "2顆", price: 180 },
+      { name: "醬漬鮭魚卵", sub: "", price: 200 },
+      { name: "☆龜山島胭脂蝦", sub: "2尾", price: 180 },
+      { name: "日本花枝", sub: "", price: 200 },
+      { name: "★日本兵庫縣甜蝦", sub: "7尾", price: 380 },
+      { name: "綜合鮭蝦刺身", sub: "甜蝦×2/紅蝦×2/胭脂蝦×2", price: 380 },
+      { name: "日本宮城生蠔", sub: "原味/柚香", price: 300 },
+      { name: "日本北海道海膽", sub: "旬價，請現場詢問", price: "旬價" },
+    ]
+  },
+  {
+    tab: "握壽司",
+    items: [
+      { name: "鮭魚握壽司", sub: "2貫", price: 70 },
+      { name: "海鱺握壽司", sub: "2貫", price: 70 },
+      { name: "松葉蟹膏軍艦", sub: "", price: 70 },
+      { name: "焦糖鮭魚", sub: "2貫", price: 80 },
+      { name: "紅甘握壽司", sub: "2貫", price: 80 },
+      { name: "日本花枝握壽司", sub: "", price: 80 },
+      { name: "天使紅蝦握壽司", sub: "", price: 80 },
+      { name: "鮭魚卵軍艦", sub: "", price: 100 },
+      { name: "明太子鮭魚握壽司", sub: "2貫", price: 100 },
+      { name: "炙燒比目魚握壽司", sub: "2貫", price: 100 },
+      { name: "北海道干貝握壽司", sub: "", price: 100 },
+      { name: "青甘握壽司", sub: "2貫", price: 100 },
+      { name: "日本兵庫縣甜蝦", sub: "", price: 100 },
+      { name: "龜山島胭脂蝦握壽司", sub: "", price: 120 },
+      { name: "綜合鮭魚握壽司", sub: "6貫，原味/明太子/焦糖", price: 230 },
+      { name: "板前上品盛合", sub: "7貫", price: 350 },
+      { name: "櫻花上品盛合", sub: "12貫", price: 680 },
+    ]
+  },
+  {
+    tab: "捲壽司/手卷",
+    items: [
+      { name: "炸蝦海苔壽司", sub: "", price: 360 },
+      { name: "炙燒鮭魚捲壽司", sub: "", price: 400 },
+      { name: "柚香勾魚海苔壽司", sub: "", price: 400 },
+      { name: "炙燒比目魚捲壽司", sub: "", price: 420 },
+      { name: "煙燻鮭魚捲壽司", sub: "", price: 420 },
+      { name: "手卷｜蝦卵", sub: "", price: 60 },
+      { name: "手卷｜蘆筍鮮蝦", sub: "", price: 60 },
+      { name: "手卷｜香酥牡蠣", sub: "", price: 90 },
+      { name: "手卷｜海老天婦羅", sub: "", price: 90 },
+      { name: "手卷｜鮭魚卵", sub: "", price: 120 },
+      { name: "手卷｜☆柚香綜合鮮魚", sub: "", price: 160 },
+      { name: "手卷｜北海道海膽爆爆捲", sub: "海膽+鮭魚卵", price: 200 },
+    ]
+  },
+  {
+    tab: "串燒",
+    categories: [
+      {
+        label: "🐄 牛串",
+        items: [
+          { name: "青蔥牛五花肉串", sub: "", price: 120 },
+          { name: "★炭燒牛肋串", sub: "2串", price: 120 },
+          { name: "剁皮辣椒牛肉串", sub: "", price: 130 },
+          { name: "蘆筍牛肉捲", sub: "", price: 130 },
+          { name: "★干貝五花肉串", sub: "", price: 160 },
+          { name: "醬燒安格斯牛肉串", sub: "2串", price: 160 },
+          { name: "柚香安格斯牛肉串", sub: "2串", price: 180 },
+          { name: "安格斯牛小排", sub: "醬燒/柚香", price: 320 },
+        ]
+      },
+      {
+        label: "🐷 豬串",
+        items: [
+          { name: "上選豬五花串", sub: "", price: 60 },
+          { name: "醬燒蔥鹽豬肉串", sub: "", price: 70 },
+          { name: "柚香豬五花串", sub: "", price: 70 },
+          { name: "十三香豬肉串", sub: "", price: 70 },
+          { name: "★蘋果豬肉串", sub: "", price: 80 },
+          { name: "青蔥豬五花串", sub: "", price: 80 },
+          { name: "番茄豬肉串", sub: "", price: 80 },
+          { name: "★醬燒松阪豬肉串", sub: "", price: 90 },
+          { name: "明太子松阪豬肉串", sub: "", price: 100 },
+          { name: "秘製鹹豬肉", sub: "", price: 180 },
+          { name: "和風松阪豬", sub: "", price: 180 },
+          { name: "醬烤蔥串腸", sub: "", price: 200 },
+        ]
+      },
+      {
+        label: "🐑 羊串",
+        items: [
+          { name: "十三香羊肉串", sub: "2本", price: 120 },
+          { name: "新疆孜然羊肉串", sub: "2本", price: 120 },
+        ]
+      }
+    ]
+  },
+  {
+    tab: "海鮮/燒鳥",
+    categories: [
+      {
+        label: "🦐 海鮮",
+        items: [
+          { name: "鹽烤秋刀魚", sub: "", price: 100 },
+          { name: "★鹽烤鮪魚", sub: "", price: 120 },
+          { name: "香魚（母）", sub: "", price: 200 },
+          { name: "🔥牛魚一夜干", sub: "", price: 220 },
+          { name: "★焗烤生蠔", sub: "", price: 200 },
+          { name: "鹽烤台灣鯛", sub: "", price: 300 },
+          { name: "鹽烤海老大蝦", sub: "2隻", price: 280 },
+          { name: "蟹膏海老柚庵燒", sub: "2隻", price: 300 },
+          { name: "★炙燒明太子干貝串", sub: "2顆", price: 150 },
+          { name: "鹽烤/酥炸鮭魚肚條", sub: "", price: 180 },
+        ]
+      },
+      {
+        label: "🍗 燒鳥",
+        items: [
+          { name: "醬燒雞皮串", sub: "", price: 50 },
+          { name: "炭燒七里香", sub: "", price: 50 },
+          { name: "魚煙招牌燒鳥", sub: "", price: 60 },
+          { name: "明太子燒鳥", sub: "", price: 70 },
+          { name: "★蔥鹽醬蔥燒鳥", sub: "", price: 70 },
+          { name: "柚子胡椒燒鳥", sub: "", price: 70 },
+          { name: "日本海蝦球", sub: "", price: 180 },
+          { name: "★櫻桃鴨肉串", sub: "2本", price: 100 },
+        ]
+      }
+    ]
+  },
+  {
+    tab: "炸物/野菜",
+    categories: [
+      {
+        label: "🍤 炸物",
+        items: [
+          { name: "日式揚出豆腐", sub: "", price: 100 },
+          { name: "香酥雞蛋豆腐", sub: "", price: 120 },
+          { name: "海老大蝦天婦羅", sub: "", price: 120 },
+          { name: "★酥炸雞軟骨", sub: "", price: 120 },
+          { name: "日式炸豬排", sub: "", price: 160 },
+          { name: "酥炸椒鹽肥腸", sub: "", price: 200 },
+          { name: "芥末鱈球", sub: "", price: 220 },
+          { name: "椒鹽蚵酥", sub: "", price: 260 },
+          { name: "★招牌日式唐揚雞", sub: "", price: 160 },
+          { name: "酥炸廣島牡蠣", sub: "2顆", price: 120 },
+        ]
+      },
+      {
+        label: "🥦 野菜",
+        items: [
+          { name: "小黃瓜", sub: "", price: 60 },
+          { name: "香菇", sub: "", price: 50 },
+          { name: "厚切柳瓜", sub: "", price: 80 },
+          { name: "四季豆", sub: "", price: 80 },
+          { name: "玉米筍", sub: "4支", price: 100 },
+          { name: "茭白筍", sub: "2-3支", price: 100 },
+          { name: "★厚切明太子山藥", sub: "4-6片", price: 200 },
+        ]
+      }
+    ]
+  },
+  {
+    tab: "冷食/沙拉",
+    items: [
+      { name: "牛蒡絲", sub: "", price: 50 },
+      { name: "干貝唇", sub: "", price: 60 },
+      { name: "柚香蓮藕", sub: "", price: 60 },
+      { name: "★芥末和風章魚", sub: "", price: 100 },
+      { name: "胡麻鮭魚卵豆腐", sub: "", price: 180 },
+      { name: "★燻燻鮭魚乳酪捲", sub: "3顆/串", price: 80 },
+      { name: "🔥生牛肉", sub: "泰式/和風/柚香", price: 220 },
+      { name: "胡麻高麗菜絲", sub: "小/大", price: "60/120" },
+      { name: "和風洋蔥沙拉", sub: "小/大", price: "70/140" },
+      { name: "和風海鮮沙拉", sub: "小/大", price: "160/220" },
+      { name: "雙醬田園蔬果沙拉", sub: "小/大", price: "180/220" },
+      { name: "★凱撒煙燻鮭魚沙拉", sub: "小/大", price: "250/350" },
+    ]
+  },
+  {
+    tab: "茶碗蒸/湯",
+    categories: [
+      {
+        label: "🍮 茶碗蒸",
+        items: [
+          { name: "日式醬油茶碗蒸", sub: "", price: 70 },
+          { name: "鮭魚卵茶碗蒸", sub: "", price: 100 },
+          { name: "北海道干貝茶碗蒸", sub: "", price: 120 },
+          { name: "炙燒比目魚茶碗蒸", sub: "", price: 120 },
+          { name: "★炙燒明太子干貝茶碗蒸", sub: "", price: 120 },
+          { name: "日本北海道海膽茶碗蒸", sub: "", price: 180 },
+        ]
+      },
+      {
+        label: "🍲 湯品",
+        items: [
+          { name: "味噌湯", sub: "", price: 80 },
+          { name: "蒜味蛤蜊湯", sub: "", price: 80 },
+          { name: "薑絲蛤蜊湯", sub: "", price: 80 },
+          { name: "薑絲鮮魚湯", sub: "", price: 300 },
+          { name: "味噌鮮魚湯", sub: "", price: 320 },
+          { name: "剁皮辣椒雞湯", sub: "+50加濃", price: 350 },
+          { name: "蒜味山藥蛤蜊雞湯", sub: "", price: 380 },
+          { name: "★日式土瓶蒸", sub: "限量", price: 120 },
+        ]
+      }
+    ]
+  },
+  {
+    tab: "板前料理",
+    items: [
+      { name: "明太子玉子燒", sub: "5個", price: 180 },
+      { name: "北海道干貝漢堡", sub: "佐雲丹海老", price: 180 },
+      { name: "日本山藥細麵", sub: "海膽鮭魚卵", price: 280 },
+      { name: "日本海膽豪邁捲", sub: "旬價，請現場詢問", price: "旬價" },
+    ]
+  },
+];
+
+// State
+const orders = {}; // key: itemId, value: { name, price, qty }
+
+function getItemId(tabIdx, catIdx, itemIdx) {
+  return `${tabIdx}-${catIdx}-${itemIdx}`;
+}
+
+function renderTabs() {
+  const tabsEl = document.getElementById('tabs');
+  const sectionsEl = document.getElementById('sections');
+  MENU.forEach((section, ti) => {
+    const tab = document.createElement('div');
+    tab.className = 'tab' + (ti === 0 ? ' active' : '');
+    tab.textContent = section.tab;
+    tab.onclick = () => switchTab(ti);
+    tabsEl.appendChild(tab);
+
+    const sec = document.createElement('div');
+    sec.className = 'section' + (ti === 0 ? ' active' : '');
+    sec.id = `sec-${ti}`;
+
+    if (section.categories) {
+      section.categories.forEach((cat, ci) => {
+        const lbl = document.createElement('div');
+        lbl.className = 'category-label';
+        lbl.textContent = cat.label;
+        sec.appendChild(lbl);
+        cat.items.forEach((item, ii) => {
+          sec.appendChild(makeItemEl(item, getItemId(ti, ci, ii)));
+        });
+      });
+    } else {
+      section.items.forEach((item, ii) => {
+        sec.appendChild(makeItemEl(item, getItemId(ti, 0, ii)));
+      });
+    }
+
+    sectionsEl.appendChild(sec);
+  });
+}
+
+function switchTab(ti) {
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === ti));
+  document.querySelectorAll('.section').forEach((s, i) => s.classList.toggle('active', i === ti));
+}
+
+function makeItemEl(item, id) {
+  const div = document.createElement('div');
+  div.className = 'item';
+  div.id = `item-${id}`;
+
+  const isJun = item.price === '旬價';
+  const priceDisplay = isJun ? '旬價' : (typeof item.price === 'string' ? `$${item.price}` : `$${item.price}`);
+
+  div.innerHTML = `
+    <div class="item-info">
+      <div class="item-name">${item.name}</div>
+      ${item.sub ? `<div class="item-sub">${item.sub}</div>` : ''}
+    </div>
+    <div class="item-price">${priceDisplay}</div>
+    ${!isJun ? `
+    <div class="qty-control">
+      <button class="qty-btn" onclick="changeQty('${id}', -1)">−</button>
+      <div class="qty-num" id="qty-${id}">0</div>
+      <button class="qty-btn" onclick="changeQty('${id}', 1)">+</button>
+    </div>` : `<div style="font-size:11px;color:#999">現場點</div>`}
+  `;
+  return div;
+}
+
+function changeQty(id, delta) {
+  const parts = id.split('-');
+  const ti = +parts[0], ci = +parts[1], ii = +parts[2];
+  const section = MENU[ti];
+  const item = section.categories ? section.categories[ci].items[ii] : section.items[ii];
+
+  if (!orders[id]) orders[id] = { name: item.name, price: item.price, qty: 0 };
+  orders[id].qty = Math.max(0, orders[id].qty + delta);
+
+  const qtyEl = document.getElementById(`qty-${id}`);
+  if (qtyEl) qtyEl.textContent = orders[id].qty;
+
+  // Highlight
+  const itemEl = document.getElementById(`item-${id}`);
+  if (itemEl) itemEl.style.background = orders[id].qty > 0 ? '#fff8f0' : '#fff';
+
+  updateTotal();
+}
+
+function updateTotal() {
+  let total = 0, count = 0;
+  for (const [id, o] of Object.entries(orders)) {
+    if (o.qty > 0 && typeof o.price === 'number') {
+      total += o.price * o.qty;
+      count += o.qty;
+    }
+  }
+  document.getElementById('totalAmt').textContent = `$${total.toLocaleString()}`;
+  document.getElementById('totalItems').textContent = count > 0 ? `共 ${count} 項` : '尚未選擇任何餐點';
+}
+
+function copyOrder() {
+  const name = document.getElementById('nameInput').value.trim() || '（未填姓名）';
+  const lines = [`🐟【${name} 的點餐】魚煙居酒屋 9/5 晚餐`, ''];
+
+  const grouped = {};
+  for (const [id, o] of Object.entries(orders)) {
+    if (o.qty <= 0) continue;
+    const ti = +id.split('-')[0];
+    const tab = MENU[ti].tab;
+    if (!grouped[tab]) grouped[tab] = [];
+    const price = typeof o.price === 'number' ? `$${o.price}×${o.qty}＝$${o.price * o.qty}` : o.price;
+    grouped[tab].push(`  • ${o.name}（${o.qty}份）${price}`);
+  }
+
+  if (Object.keys(grouped).length === 0) {
+    alert('請先選擇餐點再複製！');
+    return;
+  }
+
+  for (const [tab, items] of Object.entries(grouped)) {
+    lines.push(`【${tab}】`);
+    items.forEach(i => lines.push(i));
+    lines.push('');
+  }
+
+  // Total
+  let total = 0;
+  for (const o of Object.values(orders)) {
+    if (o.qty > 0 && typeof o.price === 'number') total += o.price * o.qty;
+  }
+  lines.push(`💰 小計：$${total.toLocaleString()}`);
+  lines.push('（旬價/雙份價格請現場確認）');
+
+  const text = lines.join('\n');
+
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(showToast);
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast();
+  }
+}
+
+function showToast() {
+  const toast = document.getElementById('toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+renderTabs();
+</script>
+</body>
+</html>
