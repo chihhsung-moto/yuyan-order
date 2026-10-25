@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>慈光堂愛宴便當</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f6f2ec; --card:#fff; --ink:#24211d; --muted:#7a7268; --line:#e6ddd1;
+  --brand:#7a4a1e; --brand-ink:#fff; --meat:#b5532a; --veg:#3f7d3a;
+  --ok:#2e7d4f; --ok-bg:#e8f4ec; --warn-bg:#fff6e5; --warn:#9a6200; --dirty:#fff8ea;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;-webkit-text-size-adjust:100%}
+button{font:inherit;cursor:pointer}
+.header{background:var(--brand);color:var(--brand-ink);padding:14px 16px 12px;text-align:center}
+.header h1{font-size:18px;letter-spacing:1px}
+.header p{font-size:12px;opacity:.8;margin-top:3px}
+
+.summary{position:sticky;top:0;z-index:50;background:#fffdf9;border-bottom:1px solid var(--line);padding:10px 16px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.sum-row{display:flex;gap:8px;max-width:640px;margin:0 auto}
+.stat{flex:1;text-align:center;background:var(--bg);border-radius:10px;padding:6px 4px}
+.stat .lbl{font-size:11px;color:var(--muted)}
+.stat .num{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+.stat.meat .num{color:var(--meat)} .stat.veg .num{color:var(--veg)}
+.sum-sub{max-width:640px;margin:6px auto 0;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+
+.wrap{max-width:640px;margin:0 auto;padding:12px 16px 120px}
+.hint{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:10px}
+
+.card{background:var(--card);border-radius:12px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.06);border:2px solid transparent;transition:background .2s,border-color .2s}
+.card.picked{background:var(--ok-bg);border-color:#bfe0cb}
+.card.dirty{background:var(--dirty);border-color:#f0d49a}
+.top{display:flex;align-items:center;gap:10px}
+.name{flex:1;min-width:0;font-size:16px;font-weight:700}
+.meta{font-size:11px;color:var(--muted);margin-top:2px;font-weight:400}
+.tag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:6px;margin-left:4px;font-weight:600}
+.tag.new{background:var(--ok-bg);color:var(--ok)}
+.tag.old{background:var(--warn-bg);color:var(--warn)}
+
+.pick{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);user-select:none;flex-shrink:0;padding:6px 8px;border-radius:10px;border:1px solid var(--line);background:#fff}
+.pick input{width:24px;height:24px;accent-color:var(--ok)}
+.card.picked .pick{color:var(--ok);border-color:#bfe0cb;font-weight:700}
+
+.qty{display:flex;align-items:center;gap:14px;margin-top:10px;flex-wrap:wrap}
+.q{display:flex;align-items:center;gap:6px}
+.q .k{font-size:13px;font-weight:700;width:18px}
+.q.m .k{color:var(--meat)} .q.v .k{color:var(--veg)}
+.qb{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:#fff;font-size:18px;font-weight:700;color:var(--brand);display:flex;align-items:center;justify-content:center;line-height:1}
+.qb:active{background:#f3ebe0}
+.qn{width:44px;height:34px;text-align:center;font-size:17px;font-weight:700;border:1px solid var(--line);border-radius:8px;font-variant-numeric:tabular-nums}
+.sub{margin-left:auto;font-size:13px;color:var(--muted)}
+.save-row{display:none;gap:8px;margin-top:10px}
+.card.dirty .save-row{display:flex}
+.btn{border:none;border-radius:10px;padding:10px 16px;font-weight:700;font-size:14px}
+.btn.primary{background:var(--brand);color:#fff;flex:1}
+.btn.ghost{background:#fff;border:1px solid var(--line);color:var(--muted)}
+.btn:disabled{opacity:.5}
+
+.bar{position:fixed;left:0;right:0;bottom:0;background:#fffdf9;border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));z-index:60;box-shadow:0 -2px 10px rgba(0,0,0,.06)}
+.bar-in{max-width:640px;margin:0 auto;display:flex;gap:8px}
+.bar .btn{flex:1}
+.btn.line{background:#06c755;color:#fff}
+.btn.reset{background:#fff;border:1px solid #e3b7a8;color:#a2412a}
+
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 18px;border-radius:20px;font-size:14px;z-index:999;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+.toast.err{background:#b3261e}
+.setup{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:12px;font-size:13px;line-height:1.6;margin-bottom:12px}
+.loading{text-align:center;color:var(--muted);padding:30px 0;font-size:14px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>內湖貴格會慈光堂　愛宴便當</h1>
+  <p>各小家請填葷素數量・沒改就沿用上次・領便當時打勾</p>
+</div>
+
+<div class="summary">
+  <div class="sum-row">
+    <div class="stat meat"><div class="lbl">葷食</div><div class="num" id="tMeat">–</div></div>
+    <div class="stat veg"><div class="lbl">素食</div><div class="num" id="tVeg">–</div></div>
+    <div class="stat"><div class="lbl">合計</div><div class="num" id="tAll">–</div></div>
+  </div>
+  <div class="sum-sub"><span id="pickInfo">已領取 –</span><span id="syncInfo">連線中…</span></div>
+</div>
+
+<div class="wrap">
+  <div id="setup" class="setup" style="display:none">
+    尚未設定後端網址：請把 Apps Script 部署後的網址填到 index.html 裡的 <b>API_URL</b>。
+  </div>
+  <p class="hint">按 ＋／− 或直接輸入數字，再按「儲存」。數字會一直保留到小家下次修改。<br>發便當時，在小家右邊打勾「已領取」。</p>
+  <div id="list"><div class="loading">載入中…</div></div>
+</div>
+
+<div class="bar"><div class="bar-in">
+  <button class="btn line" onclick="copyLine()">複製 LINE 訂購文字</button>
+  <button class="btn reset" onclick="resetPicks()">清空全部打勾</button>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== 設定：Apps Script 網頁應用程式網址（以 /exec 結尾）=====
+const API_URL = 'https://script.google.com/macros/s/AKfycbzM9ItZ-ixEsUQRukYN_fjWvJ4iAmImAPcN6fqvd-obUfinuvPdfMaK3x9bzHT0XlOo/exec';
+// ============================================================
+
+let groups = [];
+let lastReset = '';
+const drafts = {};      // name -> {meat, veg}  尚未儲存的修改
+let busy = false;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function toast(msg, isErr){
+  const t = $('toast'); t.textContent = msg; t.className = 'toast show' + (isErr ? ' err' : '');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.className = 'toast', isErr ? 4000 : 2200);
+}
+
+function fmt(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  const p = n => String(n).padStart(2,'0');
+  return `${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+async function api(body){
+  if(!API_URL) throw new Error('尚未設定 API_URL');
+  const res = body
+    ? await fetch(API_URL, {method:'POST', body: JSON.stringify(body)})
+    : await fetch(API_URL + '?t=' + Date.now());
+  const data = await res.json();
+  if(!data.ok) throw new Error(data.error || '伺服器錯誤');
+  return data;
+}
+
+function apply(data){
+  groups = data.groups; lastReset = data.lastReset || '';
+  render();
+  $('syncInfo').textContent = '更新於 ' + fmt(data.serverTime);
+}
+
+async function load(silent){
+  if(busy) return;
+  try{ apply(await api()); }
+  catch(e){ if(!silent) toast('讀取失敗：' + e.message, true); $('syncInfo').textContent = '連線失敗'; }
+}
+
+function current(g){ return drafts[g.name] || {meat:g.meat, veg:g.veg}; }
+
+function render(){
+  let m=0, v=0, picked=0;
+  groups.forEach(g => { m += g.meat; v += g.veg; if(g.picked) picked++; });
+  $('tMeat').textContent = m; $('tVeg').textContent = v; $('tAll').textContent = m+v;
+  $('pickInfo').textContent = `已領取 ${picked}／${groups.length} 家`;
+
+  // 正在輸入時不要重畫，避免打斷
+  if(document.activeElement && document.activeElement.classList.contains('qn')) return;
+
+  $('list').innerHTML = groups.map((g,i) => {
+    const c = current(g), dirty = !!drafts[g.name];
+    let tag = '';
+    if(lastReset){
+      tag = g.updated && g.updated > lastReset ? '<span class="tag new">本週已更新</span>' : '<span class="tag old">沿用上次</span>';
+    }
+    const meta = g.updated ? `最後更新 ${fmt(g.updated)}` : '尚未在網頁更新';
+    return `<div class="card${g.picked?' picked':''}${dirty?' dirty':''}">
+      <div class="top">
+        <div class="name">${esc(g.name)}${tag}<div class="meta">${meta}${g.picked && g.pickedAt ? '・' + fmt(g.pickedAt) + ' 領取' : ''}</div></div>
+        <label class="pick"><input type="checkbox" ${g.picked?'checked':''} onchange="pick(${i}, this.checked)">已領取</label>
+      </div>
+      <div class="qty">
+        <div class="q m"><span class="k">葷</span>
+          <button class="qb" onclick="step(${i},'meat',-1)" aria-label="葷食減一">−</button>
+          <input class="qn" inputmode="numeric" value="${c.meat}" onchange="typed(${i},'meat',this.value)" onblur="render()" aria-label="葷食數量">
+          <button class="qb" onclick="step(${i},'meat',1)" aria-label="葷食加一">＋</button></div>
+        <div class="q v"><span class="k">素</span>
+          <button class="qb" onclick="step(${i},'veg',-1)" aria-label="素食減一">−</button>
+          <input class="qn" inputmode="numeric" value="${c.veg}" onchange="typed(${i},'veg',this.value)" onblur="render()" aria-label="素食數量">
+          <button class="qb" onclick="step(${i},'veg',1)" aria-label="素食加一">＋</button></div>
+        <span class="sub">共 ${c.meat + c.veg}</span>
+      </div>
+      <div class="save-row">
+        <button class="btn primary" onclick="save(${i})">儲存 ${esc(g.name)}</button>
+        <button class="btn ghost" onclick="cancel(${i})">取消</button>
+      </div>
+    </div>`;
+  }).join('') || '<div class="loading">沒有資料</div>';
+}
+
+function setDraft(g, key, val){
+  const c = {...current(g)}; c[key] = Math.max(0, Math.min(200, val));
+  if(c.meat === g.meat && c.veg === g.veg) delete drafts[g.name]; else drafts[g.name] = c;
+  render();
+}
+function step(i, key, d){ const g = groups[i]; setDraft(g, key, current(g)[key] + d); }
+function typed(i, key, raw){
+  const s = String(raw).replace(/[０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0)).trim();
+  if(!/^\d+$/.test(s)){ toast('請輸入 0 以上的整數', true); render(); return; }
+  setDraft(groups[i], key, parseInt(s, 10));
+}
+function cancel(i){ delete drafts[groups[i].name]; render(); }
+
+async function save(i){
+  const g = groups[i], c = current(g);
+  busy = true;
+  try{
+    const data = await api({action:'update', name:g.name, meat:c.meat, veg:c.veg});
+    delete drafts[g.name]; busy = false; apply(data);
+    toast(`已儲存 ${g.name}：葷 ${c.meat}、素 ${c.veg}`);
+  }catch(e){ busy = false; toast('儲存失敗：' + e.message, true); }
+}
+
+async function pick(i, checked){
+  const g = groups[i]; g.picked = checked; render();
+  busy = true;
+  try{ const data = await api({action:'pick', name:g.name, picked:checked}); busy = false; apply(data); }
+  catch(e){ busy = false; g.picked = !checked; render(); toast('打勾失敗：' + e.message, true); }
+}
+
+async function resetPicks(){
+  if(!confirm('確定要清空全部「已領取」打勾嗎？\n（葷素數量不會被清掉）')) return;
+  busy = true;
+  try{ const data = await api({action:'resetPicks'}); busy = false; apply(data); toast('已清空全部打勾'); }
+  catch(e){ busy = false; toast('清空失敗：' + e.message, true); }
+}
+
+function copyLine(){
+  let m=0, v=0; groups.forEach(g => { m += g.meat; v += g.veg; });
+  const text = `本週日愛宴便當：葷 ${m} 份、素 ${v} 份，共 ${m+v} 份。`;
+  const done = () => toast('已複製：' + text);
+  if(navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(text).then(done, () => fallback(text, done)); }
+  else fallback(text, done);
+}
+function fallback(text, done){
+  const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta);
+  ta.select(); try{ document.execCommand('copy'); done(); }catch(e){ prompt('請手動複製：', text); }
+  document.body.removeChild(ta);
+}
+
+if(!API_URL){ $('setup').style.display = 'block'; $('list').innerHTML = ''; $('syncInfo').textContent = '未設定'; }
+else{ load(); setInterval(() => { if(!Object.keys(drafts).length) load(true); }, 30000); }
+document.addEventListener('visibilitychange', () => { if(!document.hidden && API_URL && !Object.keys(drafts).length) load(true); });
+</script>
+</body>
+</html>
